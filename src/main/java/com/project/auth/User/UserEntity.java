@@ -1,7 +1,6 @@
-package com.project.auth.Entity;
+package com.project.auth.User;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,24 +17,22 @@ public class UserEntity {
 	
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long userId;
+    private long id;
 	
 	private String firstname;
 	private String lastname;
 	private String email;
 	private String phone;
 	private String password;
-	
-	private String otp;
-	
 	private boolean emailVerified;
-	private LocalDateTime expirationsAt;
+
+	private String otp;
+	private LocalDateTime otpExpirationsAt;
 
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
-	
 	
 }
  

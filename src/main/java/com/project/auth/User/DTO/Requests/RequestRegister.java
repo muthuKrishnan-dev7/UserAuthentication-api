@@ -1,4 +1,4 @@
-package com.project.auth.DTO;
+package com.project.auth.User.DTO.Requests;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class RegisterDTO {
+public class RequestRegister {
 
 	 @NotBlank(message = "First name is required")
 	    @Size(min = 2, max = 30, message = "First name must be 2-30 characters")
@@ -17,7 +17,6 @@ public class RegisterDTO {
 	    )
 	    private String firstname;
 
-
 	    @NotBlank(message = "Last name is required")
 	    @Size(min = 1, max = 30, message = "Last name must be 1-30 characters")
 	    @Pattern(
@@ -26,11 +25,9 @@ public class RegisterDTO {
 	    )
 	    private String lastname;
 
-
 	    @NotBlank(message = "Email is required")
 	    @Email(message = "Enter a valid email")
 	    private String email;
-
 
 	    @NotBlank(message = "Phone number is required")
 	    @Pattern(
@@ -38,7 +35,6 @@ public class RegisterDTO {
 	        message = "Enter a valid 10-digit phone number"
 	    )
 	    private String phone;
-
 
 	    @NotBlank(message = "Password is required")
 	    @Size(min = 8, max = 20, message = "Password must be 8-20 characters")
