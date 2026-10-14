@@ -70,6 +70,12 @@ public class UserController {
 		return ResponseEntity.ok().body(response);
 	}
 
+	@PatchMapping("/editUser")
+	public ResponseEntity<ApiResponse> editUser(@RequestBody RequestEditUser request, @RequestHeader("Authorization") String authHeader){
+		ApiResponse response = serv.editUser(request, authHeader);
+		return ResponseEntity.ok().body(response);
+	}
+
 //	@PatchMapping("/edit-details")
 //	public ResponseEntity<> editUser(){
 //	}

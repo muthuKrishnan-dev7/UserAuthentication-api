@@ -56,7 +56,7 @@ public class UserService {
                 "Your OTP is: " + otp + "\n\nDo not share this OTP with anyone."
         );
         return new ResponseRegister(
-                "Registration successful. Please verify your email.",
+                "One more step to get Registration successful. Please verify your email.",
                 newUser.getEmail()
         );
     }
@@ -70,10 +70,12 @@ public class UserService {
         }
         UserEntity verify = userOptional.get();
         if (LocalDateTime.now().isAfter(verify.getOtpExpirationsAt())) {
-            throw new RuntimeException("OTP Expired. Request for new OTP");
+            repo.deleteById(userOptional.get().getId());
+            throw new RuntimeException("OTP Expired. Re-register for new OTP");
         }
         if (!verify.getOtp().equals(request.OTP())) {
-            throw new RuntimeException("Invalid OTP. Try Again");
+            repo.deleteById(userOptional.get().getId());
+            throw new RuntimeException("Invalid OTP. Try Again with re-register.");
         }
         verify.setEmailVerified(true);
         verify.setOtp(null);
@@ -153,6 +155,36 @@ public class UserService {
                 user.getCreatedAt()
         );
         return responseUser;
+    }
+
+    public ApiResponse editUser(RequestEditUser request, String authHeader) {
+
+        // 1. Validate Authorization header
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid Authorization header");
+        }
+
+        // 2. Extract JWT token
+        String token = authHeader.substring(7);
+
+        // 3. Extract email from JWT claims
+        Claims claims = jwtUtil.validateToken(token);
+        String email = claims.getSubject();
+
+        // 4. Fetch user using email
+        UserEntity user = repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 5. Update only the allowed fields
+        user.setFirstname(request.firstName());
+        user.setLastname(request.lastName());
+        user.setPhone(request.phone());
+
+        // 6. Save updated user
+        repo.save(user);
+
+        // 7. Return response
+        return new ApiResponse("User details updated successfully");
     }
 
     //    ---------------------- Edit User ----------------------
