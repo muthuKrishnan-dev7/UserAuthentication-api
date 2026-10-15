@@ -12,9 +12,9 @@ import com.project.auth.Security.JwtUtil;
 import com.project.auth.Util.OtpUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -25,6 +25,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
+
+    @Value("${app.email.enabled}")
+    private boolean emailEnabled;
 
     public UserService(UserRepository repo, PasswordEncoder passwordEncoder, EmailService emailService, JwtUtil jwtUtil) {
         this.repo = repo;
@@ -50,15 +53,21 @@ public class UserService {
         newUser.setOtpExpirationsAt(LocalDateTime.now().plusMinutes(3));
         newUser.setEmailVerified(false);
         repo.save(newUser);
-        emailService.sendEmail(
-                newUser.getEmail(),
-                "Verify Your Email",
-                "Your OTP is: " + otp + "\n\nDo not share this OTP with anyone."
-        );
-        return new ResponseRegister(
-                "One more step to get Registration successful. Please verify your email.",
-                newUser.getEmail()
-        );
+        String message = "Your OTP is: " + otp + "\n\nDo not share this OTP with anyone.";
+
+        if (emailEnabled) {
+            emailService.sendEmail(newUser.getEmail(), "Verify Your Email", message);
+            return new ResponseRegister(
+                    "One more step to get Registration successful. Please verify your email.",
+                    newUser.getEmail()
+            );
+        } else {
+            // demo mode: mail illa, OTP ah response la anuppurom
+            return new ResponseRegister(
+                    "Demo mode: Your OTP is " + otp,
+                    newUser.getEmail()
+            );
+        }
     }
 
     //    ---------------------- Email Verify ----------------------
@@ -114,7 +123,7 @@ public class UserService {
             user=repo.findByEmail(request.userName()).orElseThrow(()->new RuntimeException("User not found"));
         }
         else{
-            user=repo.findByEmail(request.userName()).orElseThrow(()->new RuntimeException("User not found"));
+            user=repo.findByPhone(request.userName()).orElseThrow(()->new RuntimeException("User not found"));
         }
 
         return new ResponseUserNameCheck(
@@ -125,17 +134,19 @@ public class UserService {
     //    ---------------------- Forgot password ----------------------
     public ApiResponse forgotPassword(RequestForgotPass request) {
         UserEntity user = repo.findByEmail(request.email())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         if (!request.newPassword().equals(request.confirmPassword())) {
             throw new IllegalArgumentException("Passwords do not match");
         }
+        if (request.newPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters");
+        }
+
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         repo.save(user);
 
-        return new ApiResponse(
-                "Password successfully updated. Now try login."
-        );
+        return new ApiResponse("Password successfully updated. Now try login.");
     }
 
     //    ---------------------- Get User ----------------------
@@ -186,8 +197,5 @@ public class UserService {
         // 7. Return response
         return new ApiResponse("User details updated successfully");
     }
-
-    //    ---------------------- Edit User ----------------------
-//    --- Bending work & Do it after make the userEntity little big ---
 
 }
